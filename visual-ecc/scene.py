@@ -2,7 +2,7 @@ from manim import *
 import numpy as np
 import random
 
-class ZKP_Final_Narrative_V8(Scene):
+class ZKP_Final_Narrative_V9(Scene):
     def construct(self):
         # 0. DEFINITION
         self.intro_definition()
@@ -162,13 +162,13 @@ class ZKP_Final_Narrative_V8(Scene):
 
         # 1. THE MAP
         map_group = VGroup()
-        map_bg = Rectangle(height=7, width=11, color=BLUE_E, fill_opacity=0.3)
+        map_bg = Rectangle(height=6, width=10, color=BLUE_E, fill_opacity=0.3)
         map_group.add(map_bg)
         
         waldo_pos = np.array([2.5, 1.5, 0])
         
         for _ in range(80):
-            pos = [random.uniform(-5, 5), random.uniform(-3, 3), 0]
+            pos = [random.uniform(-4.5, 4.5), random.uniform(-2.5, 2.5), 0]
             if np.linalg.norm(np.array(pos) - waldo_pos) > 0.8:
                 d = Dot(color=random.choice([BLUE, YELLOW, GREEN, PINK, GRAY]), radius=0.06)
                 d.move_to(pos)
@@ -178,14 +178,15 @@ class ZKP_Final_Narrative_V8(Scene):
         waldo_ring = Circle(color=WHITE, radius=0.15).move_to(waldo_pos)
         map_group.add(waldo, waldo_ring)
         
-        full_map = VGroup(map_group).shift(DOWN * 0.5)
+        # Shift entire map DOWN further to avoid title clash
+        full_map = VGroup(map_group).shift(DOWN * 1.0)
 
-        # Removed the "Here is the map" text as requested
+        # Just fade in the map (no text)
         self.play(FadeIn(full_map))
-        self.wait(1)
+        self.wait(2)
 
         # 2. THE GIANT SHIELD (Appears BEFORE text)
-        hole_center = DOWN * 0.5
+        hole_center = DOWN * 1.0
         hole_size = 0.4 
 
         # HUGE rectangles
@@ -208,14 +209,21 @@ class ZKP_Final_Narrative_V8(Scene):
         t3 = Text("Move the Map behind the shield...", font_size=24).next_to(t2, DOWN)
         self.play(Write(t3))
         
-        # Ensure correct current position for calc
-        current_waldo_pos = full_map.get_center() + (waldo_pos - (DOWN * 0.5)) # Adjust relative to group
-        # Easier way: Waldo is part of full_map. We know full_map started at DOWN*0.5. 
-        # waldo was at waldo_pos relative to origin. 
-        # So waldo's current absolute is waldo_pos + (DOWN*0.5).
-        abs_waldo_pos = waldo_pos + DOWN*0.5
+        # Correct shift logic for map at DOWN*1.0
+        # Waldo is at waldo_pos relative to map center.
+        # Map center starts at DOWN*1.0
+        # So Waldo absolute pos = (DOWN*1.0) + waldo_pos (since waldo_pos was relative to 0,0 originally, wait... no)
+        # In Manim, move_to sets absolute position.
+        # waldo_pos was absolute (2.5, 1.5).
+        # We shifted the whole group by DOWN*1.0.
+        # So current Waldo absolute Y = 1.5 - 1.0 = 0.5.
         
-        shift_vector = hole_center - abs_waldo_pos
+        # We need to target hole_center (DOWN*1.0 = -1.0)
+        # Shift vector = Target - Current
+        
+        # Let's trust Manim's get_center()
+        current_waldo = waldo.get_center()
+        shift_vector = hole_center - current_waldo
         
         # Re-layering
         self.remove(full_map)
@@ -225,7 +233,7 @@ class ZKP_Final_Narrative_V8(Scene):
         
         self.play(full_map.animate.shift(shift_vector), run_time=3.0)
         
-        arrow = Arrow(start=RIGHT*2 + DOWN*0.5, end=hole_center + RIGHT*0.2, color=RED)
+        arrow = Arrow(start=RIGHT*2 + DOWN*1.0, end=hole_center + RIGHT*0.2, color=RED)
         lbl = Text("There he is!", font_size=24, color=RED).next_to(arrow, RIGHT)
         self.play(GrowArrow(arrow), Write(lbl))
         
@@ -243,9 +251,15 @@ class ZKP_Final_Narrative_V8(Scene):
         q3 = Text("This shows I can prove I possess a secret key", font_size=24, color=YELLOW).next_to(q2, DOWN, buff=0.5)
         q4 = Text("without ever showing myself using the key.", font_size=24, color=YELLOW).next_to(q3, DOWN)
         
-        self.play(Write(title), FadeIn(q1), Write(q2))
-        self.play(Write(q3), Write(q4))
-        self.wait(4)
+        # Sequential Animation
+        self.play(Write(title))
+        self.play(FadeIn(q1))
+        self.wait(0.5)
+        self.play(Write(q2))
+        self.wait(1)
+        self.play(Write(q3))
+        self.play(Write(q4))
+        self.wait(3)
         self.clear()
 
     def scene_alibaba_final(self):
@@ -259,7 +273,6 @@ class ZKP_Final_Narrative_V8(Scene):
         
         door = Line(cave_center + UP*1.5, cave_center + UP*2.5, color=ORANGE, stroke_width=8)
         
-        # Magic Door Label - FIXED POSITION
         lbl_door = Text("Magic Door", font_size=16, color=ORANGE).next_to(door, UP, buff=0.1)
 
         lbl_A = Text("Path A", font_size=20).move_to(cave_center + LEFT * 3.5)
