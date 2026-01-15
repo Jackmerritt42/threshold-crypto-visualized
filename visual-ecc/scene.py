@@ -1,29 +1,72 @@
 from manim import *
 import numpy as np
+import random
 
-class ZKP_Final_Narrative_V2(Scene):
+class ZKP_Final_Narrative_V6(Scene):
     def construct(self):
-        # 1. THE INTUITION
+        # 0. DEFINITION (Layout Fixed)
+        self.intro_definition()
+
+        # 1. INTUITION (Colorblind + Probability Text)
         self.intro_sequence_1()
         self.scene_colorblind_loop()
         
-        # 2. THE APPLICATION (Deep Dive)
-        self.intro_sequence_2()
-        self.scene_petersen_graph_deep()
+        # 2. INTERLUDE (Where's Waldo + Math Fix)
+        self.intro_sequence_waldo()
+        self.scene_wheres_waldo()
         
-        # 3. THE ANALOGY
-        self.intro_sequence_3()
+        # 3. THE ANALOGY (Ali Baba)
+        self.intro_sequence_alibaba()
         self.scene_alibaba_final()
         
         # 4. OUTRO
         self.outro_contact_slide()
+
+    # --- PART 0: WHAT IS A ZKP? ---
+    def intro_definition(self):
+        title = Title("What is a Zero-Knowledge Proof?").to_edge(UP)
+        
+        # Definition - Scaled down to fit better
+        t1 = Text("Peggy wants to prove to Victor that she knows a secret,", font_size=28).shift(UP*1.5)
+        t2 = Text("without revealing the secret itself.", font_size=28, color=YELLOW).next_to(t1, DOWN)
+        
+        # Specific Context
+        context_t = Text("Example: Victor is Colorblind. Peggy is not.", font_size=24, color=BLUE).next_to(t2, DOWN, buff=0.5)
+        goal_t = Text("Goal: Prove the balls are different colors without saying which is Red.", font_size=24).next_to(context_t, DOWN)
+        
+        definition_group = VGroup(t1, t2, context_t, goal_t)
+        
+        self.play(Write(title))
+        self.play(FadeIn(definition_group))
+        self.wait(3)
+        
+        # The 3 Properties (Moved higher and scaled to not cut off)
+        self.play(definition_group.animate.scale(0.7).to_edge(UP).shift(DOWN*1.0))
+        
+        # Properties arranged horizontally to save vertical space? 
+        # Or just tighter vertical packing.
+        
+        p1 = Text("1. Completeness", color=GREEN, font_size=28).shift(LEFT*4 + DOWN*0.5)
+        p1_desc = Text("If true, honest Victor\nis convinced.", font_size=20, color=GRAY).next_to(p1, DOWN)
+        
+        p2 = Text("2. Soundness", color=RED, font_size=28).shift(RIGHT*4 + DOWN*0.5)
+        p2_desc = Text("If false, cheating Peggy\ncannot fool him.", font_size=20, color=GRAY).next_to(p2, DOWN)
+        
+        p3 = Text("3. Zero-Knowledge", color=BLUE, font_size=28).move_to(DOWN*2.5)
+        p3_desc = Text("Victor learns nothing else.", font_size=20, color=GRAY).next_to(p3, DOWN)
+        
+        self.play(Write(p1), Write(p1_desc))
+        self.play(Write(p2), Write(p2_desc))
+        self.play(Write(p3), Write(p3_desc))
+        
+        self.wait(4)
+        self.clear()
 
     # --- PART 1: COLORBLIND ---
     def intro_sequence_1(self):
         self.clear()
         title = Title("Part 1: The Intuition").to_edge(UP)
         
-        # New Phrasing
         q1 = Text("The Core Problem:", color=BLUE, font_size=36).shift(UP)
         q2 = Text("How can I prove that I know something...", font_size=28).next_to(q1, DOWN)
         q3 = Text("(e.g., the difference between colors)", font_size=24, color=YELLOW).next_to(q2, DOWN)
@@ -46,8 +89,8 @@ class ZKP_Final_Narrative_V2(Scene):
         self.play(Write(cert_text), Write(cert_num))
 
         # Setup Balls
-        ball_left = Dot(radius=0.6, color=RED).move_to(LEFT * 1.5 + DOWN * 0.5)
-        ball_right = Dot(radius=0.6, color=GREEN).move_to(RIGHT * 1.5 + DOWN * 0.5)
+        ball_left = Dot(radius=0.6, color=RED).move_to(LEFT * 1.5 + DOWN * 0.2)
+        ball_right = Dot(radius=0.6, color=GREEN).move_to(RIGHT * 1.5 + DOWN * 0.2)
         self.play(FadeIn(ball_left, ball_right))
 
         # --- THE LOOP ---
@@ -58,40 +101,37 @@ class ZKP_Final_Narrative_V2(Scene):
             round_lbl = Text(f"Round {n}", font_size=24, color=YELLOW).to_corner(UL)
             self.play(FadeIn(round_lbl))
             
-            # 1. VICTOR'S PHASE (Peggy Blindfolded)
-            # Desaturate
+            # 1. VICTOR'S PHASE
             self.play(
                 ball_left.animate.set_color(GRAY),
                 ball_right.animate.set_color(GRAY),
                 run_time=0.3
             )
             
-            # Show Peggy is blocked
-            blindfold = Text("[Peggy Looks Away]", font_size=20, color=RED).to_edge(UP).shift(DOWN)
+            blindfold = Text("[Peggy Looks Away]", font_size=20, color=RED).to_corner(UR)
             self.play(FadeIn(blindfold))
             
             do_switch = (i % 2 == 0) 
             decision_text = "SWITCHING" if do_switch else "NOT SWITCHING"
-            secret_lbl = Text(f"[Victor secretly chooses: {decision_text}]", font_size=20, color=GRAY_B).next_to(title, DOWN)
+            secret_lbl = Text(f"[Victor secretly chooses: {decision_text}]", font_size=24, color=GRAY_B).to_edge(DOWN).shift(UP * 1.5)
             self.play(FadeIn(secret_lbl))
 
             # Shuffle
-            self.play(Rotate(VGroup(ball_left, ball_right), angle=PI, about_point=DOWN*0.5), run_time=0.5)
+            self.play(Rotate(VGroup(ball_left, ball_right), angle=PI, about_point=DOWN*0.2), run_time=0.5)
             if do_switch:
                 self.play(Swap(ball_left, ball_right), run_time=0.3)
             else:
                 self.wait(0.3)
-            self.play(Rotate(VGroup(ball_left, ball_right), angle=PI, about_point=DOWN*0.5), run_time=0.5)
+            self.play(Rotate(VGroup(ball_left, ball_right), angle=PI, about_point=DOWN*0.2), run_time=0.5)
             
             # 2. REVEAL PHASE
-            self.play(FadeOut(secret_lbl), FadeOut(blindfold)) # Peggy looks back
+            self.play(FadeOut(secret_lbl), FadeOut(blindfold))
             
-            # Restore colors logic
             left_col = GREEN if do_switch else RED
             right_col = RED if do_switch else GREEN
             
-            peggy_msg = "Peggy: 'You Switched!'" if do_switch else "Peggy: 'You Stayed!'"
-            msg_obj = Text(peggy_msg, color=PINK, font_size=24).next_to(ball_left, UP, buff=1.0)
+            peggy_msg = "Peggy: 'Switched!'" if do_switch else "Peggy: 'Stayed!'"
+            msg_obj = Text(peggy_msg, color=PINK, font_size=24).next_to(ball_left, UP, buff=0.8)
             
             self.play(
                 ball_left.animate.set_color(left_col),
@@ -108,116 +148,105 @@ class ZKP_Final_Narrative_V2(Scene):
             
             self.play(FadeOut(round_lbl), FadeOut(msg_obj))
 
-        self.wait(1)
-        self.clear()
-
-    # --- PART 2: GRAPH COLORING (Expanded) ---
-    def intro_sequence_2(self):
-        title = Title("Part 2: The Application").to_edge(UP)
-        
-        # Deep explanation
-        t1 = Text("Why is this useful for Crypto?", color=BLUE, font_size=32).shift(UP*1.5)
-        
-        bullets = VGroup(
-            Text("1. Finding a '3-Coloring' for a huge graph is HARD.", font_size=24),
-            Text("   (This is the 'Secret Password')", font_size=20, color=GRAY),
-            Text("2. Checking if two dots are different is EASY.", font_size=24),
-            Text("   (This is the 'Verification')", font_size=20, color=GRAY),
-            Text("3. By revealing only 2 dots at a time...", font_size=24),
-            Text("   Peggy proves she knows the full pattern", font_size=24, color=YELLOW),
-            Text("   without ever revealing the pattern itself.", font_size=24, color=YELLOW)
-        ).arrange(DOWN, aligned_edge=LEFT).next_to(t1, DOWN, buff=0.5)
-        
-        self.play(Write(title), Write(t1))
-        self.play(Write(bullets), run_time=5)
+        # Add the 10x Probability Text
+        final_stat = Text("Repeat 10 times -> Chance of luck is < 0.1%", font_size=24, color=YELLOW).to_edge(DOWN)
+        self.play(Write(final_stat))
         self.wait(3)
         self.clear()
 
-    def scene_petersen_graph_deep(self):
-        title = Title("Zero-Knowledge Graph Coloring").to_edge(UP)
-        self.add(title)
+    # --- PART 2: WHERE'S WALDO ---
+    def intro_sequence_waldo(self):
+        self.clear()
+        title = Title("Part 2: Where's Waldo?").to_edge(UP)
         
-        # 1. SETUP GRAPH (Right side)
-        outer_radius = 1.8
-        inner_radius = 0.9
-        vertices = list(range(10))
-        edges = [
-            (0,1), (1,2), (2,3), (3,4), (4,0),
-            (0,5), (1,6), (2,7), (3,8), (4,9),
-            (5,7), (7,9), (9,6), (6,8), (8,5)
-        ]
-        layout = {}
-        for i in range(5):
-            layout[i] = [outer_radius * np.sin(i * 2 * PI / 5), outer_radius * np.cos(i * 2 * PI / 5), 0]
-            layout[i+5] = [inner_radius * np.sin(i * 2 * PI / 5), inner_radius * np.cos(i * 2 * PI / 5), 0]
-
-        colors = {0:RED, 1:GREEN, 2:RED, 3:GREEN, 4:BLUE, 5:BLUE, 6:BLUE, 7:GREEN, 8:RED, 9:RED}
-
-        graph = Graph(
-            vertices, edges, layout=layout,
-            vertex_config={"radius": 0.15},
-            edge_config={"stroke_width": 3, "color": GRAY_E}
-        ).shift(DOWN * 0.5 + RIGHT * 2.5)
+        q1 = Text("The Problem:", color=BLUE, font_size=36).shift(UP)
+        q2 = Text("How do you prove you found Waldo...", font_size=28).next_to(q1, DOWN)
+        q3 = Text("...without showing WHERE he is on the map?", font_size=28, color=YELLOW).next_to(q2, DOWN)
         
-        self.play(Create(graph), run_time=1.5)
-
-        # 2. COMMITMENT EXPLANATION
-        panel = VGroup(
-            Text("Step 1: Commitment", color=YELLOW, font_size=24),
-            Text("Peggy puts the solution\nin a safe.", font_size=20),
-        ).arrange(DOWN).to_edge(LEFT).shift(UP)
-        self.play(Write(panel))
-
-        # Hats appear
-        covers = VGroup()
-        for v in vertices:
-            pos = graph.vertices[v].get_center()
-            hat = Circle(radius=0.2, color=WHITE, fill_opacity=1, fill_color=GRAY_D).move_to(pos)
-            q = MathTex("?", color=BLACK).move_to(pos).scale(0.6)
-            covers.add(VGroup(hat, q))
-        self.play(FadeIn(covers))
-        
-        note = Text("Victor cannot see\nthe colors yet.", font_size=18, color=RED).next_to(covers, LEFT)
-        self.play(Write(note))
-        self.wait(1)
-        self.play(FadeOut(note))
-
-        # 3. CHALLENGE EXPLANATION
-        panel_2 = VGroup(
-            Text("Step 2: Challenge", color=YELLOW, font_size=24),
-            Text("Victor picks ONE\nrandom edge.", font_size=20),
-        ).arrange(DOWN).to_edge(LEFT).shift(DOWN)
-        self.play(Write(panel_2))
-        
-        u, v = 5, 7
-        edge_obj = graph.edges[(u, v)]
-        self.play(edge_obj.animate.set_color(YELLOW).set_stroke(width=6))
-        
-        why_txt = Text("Why just one?", font_size=24, color=PINK).to_edge(LEFT)
-        self.play(Write(why_txt))
-        why_expl = Text("Revealing the whole graph\nwould leak the secret.\nOne edge leaks almost nothing.", font_size=18).next_to(why_txt, DOWN)
-        self.play(Write(why_expl))
-        self.wait(2)
-        self.play(FadeOut(why_txt), FadeOut(why_expl))
-
-        # 4. REVEAL EXPLANATION
-        self.play(
-            covers[u].animate.shift(UP*0.4).set_opacity(0),
-            covers[v].animate.shift(UP*0.4).set_opacity(0)
-        )
-        
-        check_mark = MathTex(r"\neq", color=GREEN, font_size=50).move_to(edge_obj.get_center())
-        check_bg = SurroundingRectangle(check_mark, color=BLACK, fill_color=BLACK, fill_opacity=0.8, stroke_width=0, buff=0.1)
-        self.play(FadeIn(check_bg), Write(check_mark))
-        
-        final_note = Text("Proof Logic:", color=BLUE, font_size=24).to_edge(LEFT)
-        final_exp = Text("If Peggy lied on ANY edge,\nVictor had a chance to catch her.\nRepeat 100x -> 100% Caught.", font_size=18).next_to(final_note, DOWN)
-        self.play(Write(final_note), Write(final_exp))
+        self.play(Write(title), FadeIn(q1))
+        self.play(Write(q2))
+        self.play(Write(q3))
         self.wait(4)
         self.clear()
 
+    def scene_wheres_waldo(self):
+        title = Title("Part 2: Zero-Knowledge Map").to_edge(UP)
+        self.add(title)
+
+        # 1. THE MAP
+        map_group = VGroup()
+        map_bg = Rectangle(height=6, width=9, color=BLUE_E, fill_opacity=0.3)
+        map_group.add(map_bg)
+        
+        for _ in range(150):
+            d = Dot(color=random.choice([BLUE, YELLOW, GREEN, PINK, GRAY]), radius=0.05)
+            d.move_to([random.uniform(-4, 4), random.uniform(-2.5, 2.5), 0])
+            map_group.add(d)
+            
+        # Add Waldo
+        waldo_pos = np.array([2.0, 1.5, 0])
+        waldo = Dot(color=RED, radius=0.15).move_to(waldo_pos)
+        waldo_ring = Circle(color=WHITE, radius=0.15).move_to(waldo_pos)
+        
+        # NOTE: Adding them to VGroup is critical for moving them together
+        map_group.add(waldo, waldo_ring)
+        
+        # Shift entire map down to start
+        full_map = VGroup(map_group).shift(DOWN * 0.5)
+
+        t1 = Text("Here is the map.", font_size=24).to_corner(UL)
+        self.play(Write(t1), FadeIn(full_map))
+        self.wait(1)
+        self.play(FadeOut(t1))
+
+        # 2. THE GIANT SHIELD
+        # Text shifted down to avoid title clash
+        t2 = Text("The Solution: A giant shield with a tiny hole.", font_size=24, color=YELLOW).to_corner(UL).shift(DOWN*0.5)
+        self.play(Write(t2))
+
+        hole_center = DOWN * 0.5
+        hole_size = 0.4 
+
+        # HUGE rectangles
+        r_top = Rectangle(width=20, height=10, color=BLACK, fill_opacity=1).move_to(hole_center + UP * (5 + hole_size))
+        r_bot = Rectangle(width=20, height=10, color=BLACK, fill_opacity=1).move_to(hole_center + DOWN * (5 + hole_size))
+        r_left = Rectangle(width=10, height=20, color=BLACK, fill_opacity=1).move_to(hole_center + LEFT * (5 + hole_size))
+        r_right = Rectangle(width=10, height=20, color=BLACK, fill_opacity=1).move_to(hole_center + RIGHT * (5 + hole_size))
+        
+        hole_ring = Circle(radius=hole_size, color=WHITE).move_to(hole_center)
+        shield_visual = VGroup(r_top, r_bot, r_left, r_right, hole_ring)
+        
+        self.play(FadeIn(shield_visual))
+        
+        # 3. PROVING IT
+        t3 = Text("Move the Map behind the shield...", font_size=24).next_to(t2, DOWN, aligned_edge=LEFT)
+        self.play(Write(t3))
+        
+        # FIX FOR HOVERING:
+        # We need to move the 'full_map' such that 'waldo' ends up at 'hole_center'.
+        # We calculate the vector from Waldo's CURRENT absolute position to the HOLE's absolute position.
+        
+        current_waldo_pos = waldo.get_center() # Use get_center() to be safe
+        shift_vector = hole_center - current_waldo_pos
+        
+        # Z-Index management
+        self.remove(full_map)
+        self.add(full_map)
+        self.add(shield_visual)
+        
+        self.play(full_map.animate.shift(shift_vector), run_time=2.5)
+        
+        arrow = Arrow(start=RIGHT*2 + DOWN*0.5, end=hole_center + RIGHT*0.2, color=RED)
+        lbl = Text("There he is!", font_size=24, color=RED).next_to(arrow, RIGHT)
+        self.play(GrowArrow(arrow), Write(lbl))
+        
+        t4 = Text("Proof verified! Location remains secret.", font_size=24, color=GREEN).to_edge(DOWN)
+        self.play(Write(t4))
+        self.wait(3)
+        self.clear()
+
     # --- PART 3: ALI BABA ---
-    def intro_sequence_3(self):
+    def intro_sequence_alibaba(self):
         title = Title("Part 3: The Classic Analogy").to_edge(UP)
         q1 = Text("Ali Baba's Cave", color=BLUE, font_size=36).move_to(UP)
         q2 = Text("A physical demonstration of Zero Knowledge.", font_size=24).next_to(q1, DOWN)
@@ -245,13 +274,15 @@ class ZKP_Final_Narrative_V2(Scene):
         peggy = Dot(color=PINK, radius=0.2).move_to(cave_center + DOWN * 2)
         victor = Dot(color=BLUE, radius=0.2).move_to(cave_center + DOWN * 2.5)
         
-        # 1. Enter
+        # 1. Enters
         self.play(peggy.animate.move_to(cave_center + LEFT * 2))
         self.play(peggy.animate.set_opacity(0.4).move_to(cave_center + UP * 2 + LEFT * 0.5))
         
         # 2. Challenge
         self.play(victor.animate.move_to(cave_center + DOWN * 2))
-        cmd = Text("Come out Path B!", color=BLUE, font_size=24).next_to(victor, UP)
+        
+        # Command below victor
+        cmd = Text("Come out Path B!", color=BLUE, font_size=24).next_to(victor, DOWN)
         self.play(Write(cmd))
         
         # 3. Cross
