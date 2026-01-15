@@ -116,7 +116,7 @@ class ZKP_Final_Narrative(Scene):
             Text("2. The Coloring is the 'Private Key'.", font_size=24),
             Text("3. Zero-Knowledge means proving you have the Key", font_size=24),
             Text("   without ever showing it to anyone.", font_size=24)
-        ).arranges(DOWN, aligned_edge=LEFT).next_to(q1, DOWN, buff=0.5)
+        ).arrange(DOWN, aligned_edge=LEFT).next_to(q1, DOWN, buff=0.5)
         
         self.play(Write(title), FadeIn(q1))
         self.play(Write(bullets))
